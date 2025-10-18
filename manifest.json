@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "SpeakPage AI: Multilingual Web Reader",
+  "version": "1.0",
+  "description": "AI-powered multimodal web reader providing text-to-speech, summarization, and translation services.",
+  
+  "icons": {
+    "16": "icon16.png",   
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "32": "icon32.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    },
+    "default_title": "SpeakPage AI Reader"
+  },
+  
+  "background": {
+    "service_worker": "service_worker.js"
+  },
+  
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "contextMenus",
+    "notifications",
+    "tts" 
+  ],
+  
+  "host_permissions": [
+    "https://*/*", 
+    "http://127.0.0.1:5001/*", 
+    "https://speak-page-atxhcshy6-shreykr03-4807s-projects.vercel.app/*"
+  ]
+}
