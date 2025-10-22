@@ -2,11 +2,49 @@
 <html>
 <head>
   <title>SpeakPage AI</title>
-  </head>
+  <style>
+    body { width: 300px; padding: 10px; font-family: sans-serif; }
+    button { width: 100%; padding: 8px; margin-bottom: 8px; }
+    #readControls { display: flex; gap: 5px; margin-bottom: 8px; }
+    #readBtn { flex-grow: 2; }
+    #pauseResumeBtn, #stopBtn { flex-grow: 1; }
+    #output { border: 1px solid #ccc; padding: 10px; min-height: 50px; white-space: pre-wrap; font-size: 14px; }
+    #speedControl { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    #speedSelect { width: 120px; }
+  </style>
+</head>
 <body>
-  <h1>SpeakPage AI</h1>
-  <button id="readPage">Read Current Page</button>
-  <div id="status">Waiting...</div>
+  <h3>SpeakPage AI: Multimodal Reader</h3>
+  
+  <button id="summarizeBtn">Summarize Page</button>
+
+  <div id="speedControl">
+      <label for="speedSelect">Reading Speed:</label>
+      <select id="speedSelect">
+          <option value="1.0">1.0x (Normal)</option>
+          <option value="0.75">0.75x (Slow)</option>
+          <option value="1.25">1.25x</option>
+          <option value="1.5">1.5x</option>
+          <option value="1.75">1.75x</option>
+          <option value="2.0">2.0x (Fast)</option>
+      </select>
+  </div>
+  
+  <div id="readControls">
+      <button id="readBtn">Read Aloud</button>
+      <button id="pauseResumeBtn" disabled>Pause</button>
+      <button id="stopBtn" disabled>Stop</button>
+  </div>
+
+  <div id="multimodalSection">
+    <h4>Ask the AI (Multimodal Prompt):</h4>
+    <textarea id="promptInput" placeholder="e.g., What are the main financial risks in this article?" rows="3"></textarea>
+    <button id="promptBtn">Get Answer</button>
+  </div>
+
+  <h4>Output:</h4>
+  <div id="output">Ready.</div>
+  
   <script src="popup.js"></script>
 </body>
 </html>

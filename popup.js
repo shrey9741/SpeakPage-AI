@@ -1,93 +1,138 @@
 // =================================================================
-// FILE: popup.js (Final Version)
-// Purpose: Handles UI interaction and message passing to service worker.
-// Includes asynchronous error handling to suppress console warnings.
+// FILE: popup.js (Final – Synced with TTS + Smart Controls)
 // =================================================================
 
+// --- DOM Elements ---
 const summarizeBtn = document.getElementById('summarizeBtn');
 const readBtn = document.getElementById('readBtn');
+const pauseResumeBtn = document.getElementById('pauseResumeBtn');
+const stopBtn = document.getElementById('stopBtn');
 const promptBtn = document.getElementById('promptBtn');
 const outputDiv = document.getElementById('output');
 const promptInput = document.getElementById('promptInput');
+const speedSelect = document.getElementById('speedSelect');
 
-// Utility function to gracefully handle the promise closure error (The Fix)
+// --- Utility: Safe Chrome Message Sender ---
 function sendMessageWithCallback(message, callback) {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        // Use the callback argument to catch and ignore the expected error
-        chrome.runtime.sendMessage({ ...message, tabId: tabs[0].id }, () => {
-            if (chrome.runtime.lastError) {
-                // Ignore the expected error when the popup closes too quickly
-                console.log("Ignoring expected popup closure error:", chrome.runtime.lastError.message);
-            }
-            if (callback) {
-                callback();
-            }
-        });
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (!tabs.length) return;
+    chrome.runtime.sendMessage({ ...message, tabId: tabs[0].id }, () => {
+      if (chrome.runtime.lastError) {
+        console.log("Ignoring popup closure error:", chrome.runtime.lastError.message);
+      }
+      if (callback) callback();
     });
+  });
 }
 
-// --- Message Listener from Service Worker (To receive results from Vercel) ---
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "summary_result") {
-        outputDiv.textContent = `SUMMARY:\n${request.summary}`;
-        summarizeBtn.textContent = 'Summarize Page';
-        summarizeBtn.disabled = false;
-        promptBtn.disabled = false;
+// --- Helper: Reset UI after reading/stop ---
+function resetReadControls(message = 'Ready.') {
+  readBtn.disabled = false;
+  pauseResumeBtn.disabled = true;
+  stopBtn.disabled = true;
+  pauseResumeBtn.textContent = 'Pause';
+  outputDiv.textContent = message;
+}
 
-    } else if (request.action === "reading_failed") {
-        outputDiv.textContent = `Error: ${request.message}`;
-        readBtn.disabled = false;
-        
-    } else if (request.action === "reading_started") {
-        outputDiv.textContent = 'Reading aloud the full text...';
-        readBtn.disabled = false;
-        
-    } else if (request.action === "prompt_result") {
-        outputDiv.textContent = `AI RESPONSE:\n${request.answer}`;
-        promptBtn.textContent = 'Get Answer';
-        promptBtn.disabled = false;
-    }
+// --- Helper: Lock UI during tasks ---
+function lockUI(isLocked) {
+  summarizeBtn.disabled = isLocked;
+  promptBtn.disabled = isLocked;
+  readBtn.disabled = isLocked;
+}
+
+// =================================================================
+// 🔔 Message Listener — Responds to Service Worker
+// =================================================================
+chrome.runtime.onMessage.addListener((request) => {
+  switch (request.action) {
+    case "summary_result":
+      outputDiv.textContent = `🧠 SUMMARY:\n${request.summary}`;
+      lockUI(false);
+      summarizeBtn.textContent = 'Summarize Page';
+      break;
+
+    case "prompt_result":
+      outputDiv.textContent = `💬 AI RESPONSE:\n${request.answer}`;
+      lockUI(false);
+      promptBtn.textContent = 'Get Answer';
+      break;
+
+    case "reading_started":
+      outputDiv.textContent = '🔊 Reading aloud...';
+      readBtn.disabled = true;
+      pauseResumeBtn.disabled = false;
+      stopBtn.disabled = false;
+      break;
+
+    case "reading_finished":
+      resetReadControls('✅ Reading completed.');
+      break;
+
+    case "reading_failed":
+      resetReadControls(`❌ ${request.message}`);
+      break;
+
+    default:
+      break;
+  }
 });
 
+// =================================================================
+// 🎛 BUTTON HANDLERS
+// =================================================================
 
-// --- Button Event Handlers ---
-
-// 1. Summarize Button Click
+// 1️⃣ Summarize Button
 summarizeBtn.addEventListener('click', () => {
-    outputDiv.textContent = 'Analyzing and Summarizing...';
-    summarizeBtn.textContent = 'Working...';
-    summarizeBtn.disabled = true;
-    promptBtn.disabled = true;
+  outputDiv.textContent = '🧠 Summarizing page...';
+  summarizeBtn.textContent = 'Working...';
+  lockUI(true);
 
-    // Send the message using the safe handler
-    sendMessageWithCallback({ action: "get_summary" });
+  sendMessageWithCallback({ action: "get_summary" });
 });
 
-// 2. Read Button Click (Triggers TTS)
+// 2️⃣ Read Aloud Button
 readBtn.addEventListener('click', () => {
-    readBtn.disabled = true; // Disable until reading starts/fails
-    outputDiv.textContent = 'Starting Text-to-Speech...';
+  const rate = parseFloat(speedSelect.value);
 
-    // Send the message using the safe handler
-    sendMessageWithCallback({ action: "start_reading" });
+  outputDiv.textContent = `🔊 Reading aloud at ${rate}x speed...`;
+  readBtn.disabled = true;
+  pauseResumeBtn.disabled = false;
+  stopBtn.disabled = false;
+  pauseResumeBtn.textContent = 'Pause';
+
+  sendMessageWithCallback({ action: "start_reading", rate });
 });
 
-// 3. Multimodal Prompt Button Click
+// 3️⃣ Pause / Resume Button
+pauseResumeBtn.addEventListener('click', () => {
+  const isPaused = pauseResumeBtn.textContent === 'Pause';
+  pauseResumeBtn.textContent = isPaused ? 'Resume' : 'Pause';
+  outputDiv.textContent = isPaused ? '⏸ Paused.' : '▶️ Resumed.';
+
+  sendMessageWithCallback({ action: isPaused ? 'pause_reading' : 'resume_reading' });
+});
+
+// 4️⃣ Stop Button
+stopBtn.addEventListener('click', () => {
+  resetReadControls('⏹️ Reading stopped.');
+  sendMessageWithCallback({ action: "stop_reading" });
+});
+
+// 5️⃣ Multimodal Prompt Button
 promptBtn.addEventListener('click', () => {
-    const userPrompt = promptInput.value.trim();
-    if (!userPrompt) {
-        outputDiv.textContent = "Please enter a question for the AI.";
-        return;
-    }
+  const userPrompt = promptInput.value.trim();
+  if (!userPrompt) {
+    outputDiv.textContent = "Please enter a question for the AI.";
+    return;
+  }
 
-    outputDiv.textContent = 'Sending prompt to AI...';
-    promptBtn.textContent = 'Working...';
-    promptBtn.disabled = true;
-    summarizeBtn.disabled = true;
+  outputDiv.textContent = '💭 Thinking...';
+  promptBtn.textContent = 'Working...';
+  lockUI(true);
 
-    // Send the message using the safe handler
-    sendMessageWithCallback({
-        action: "multimodal_prompt",
-        prompt: userPrompt
-    });
+  sendMessageWithCallback({
+    action: "multimodal_prompt",
+    prompt: userPrompt
+  });
 });
