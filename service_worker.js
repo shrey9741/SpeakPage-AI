@@ -1,161 +1,129 @@
 // =================================================================
-// FILE: service_worker.js (Final, Functional Version)
-// Purpose: Orchestrates content scraping, TTS, and secure Vercel API calls.
-// Solves: TTS not starting immediately (by adding chrome.tts.stop()).
+// FILE: service_worker.js (Fixed + Debug Logging)
 // =================================================================
 
 const PROXY_URL = 'https://speak-page-atxhcshy6-shreykr03-4807s-projects.vercel.app/api/ai-proxy'; 
 const FALLBACK_LANG = 'en-IN';
 
-
-// --- Core API Proxy Fetch Function (No Change) ---
+// --- Core API Proxy Fetch Function ---
 async function fetchFromAIProxy(action, text, options = {}) {
     try {
+        console.log(`[AI-PROXY] Sending request to ${PROXY_URL}...`);
+
         const response = await fetch(PROXY_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json; charset=UTF-8' },
             body: JSON.stringify({
-                action: action,
-                text: text,
+                action,
+                text,
                 ...options
             })
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`AI Proxy Error (${response.status}): ${errorData.error || response.statusText}`);
+            console.error(`[AI-PROXY] HTTP ${response.status}`);
+            throw new Error(`AI Proxy Error (${response.status}): ${response.statusText}`);
         }
 
         const data = await response.json();
-        if (data.success) {
+        console.log('[AI-PROXY] Raw response:', data);
+
+        if (data?.success && data?.result) {
             return data.result;
         } else {
-            throw new Error(data.error || 'Unknown proxy error.');
+            throw new Error(data?.error || 'Invalid AI response format.');
         }
+
     } catch (error) {
         console.error('FETCH ERROR:', error);
         chrome.notifications.create({
             type: 'basic',
-            iconUrl: 'icon128.png', 
+            iconUrl: 'icon128.png',
             title: 'SpeakPage AI Error',
-            message: `Failed to process AI request: ${error.message.substring(0, 80)}...`
+            message: `Proxy request failed: ${error.message}`
         });
         return null;
     }
 }
 
-
-// --- Main Message Listener ---
+// --- Main Listener ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    
     const runAsync = async () => {
-        const tabId = request.tabId;
+        try {
+            const tabId = request.tabId;
 
-        // --- TTS Playback Controls (Handle BEFORE scraping) ---
-        if (request.action === "pause_reading") {
-            chrome.tts.pause();
-            return;
-        }
-        if (request.action === "resume_reading") {
-            chrome.tts.resume();
-            return;
-        }
-        if (request.action === "stop_reading") {
-            chrome.tts.stop();
-            return; 
-        }
+            // --- TTS Controls ---
+            if (request.action === "pause_reading") return chrome.tts.pause();
+            if (request.action === "resume_reading") return chrome.tts.resume();
+            if (request.action === "stop_reading") return chrome.tts.stop();
 
-        // --- Proceed only if text scraping is needed ---
-        
-        const injectionResults = await chrome.scripting.executeScript({
-            target: { tabId: tabId },
-            func: extractArticleText, 
-        });
-
-        const textToProcess = injectionResults[0]?.result;
-
-        if (!textToProcess || textToProcess.length < 100) { 
-            chrome.runtime.sendMessage({ action: "reading_failed", message: "Could not find sufficient article text on the page." });
-            return;
-        }
-        
-        // --- ROUTE ACTIONS (API/TTS) ---
-        if (request.action === "start_reading") {
-            const rate = request.rate || 1.0; 
-            
-            // CRITICAL FIX: Stop any existing speech queue before starting new one
-            chrome.tts.stop(); 
-            
-            chrome.tts.speak(textToProcess, { 
-                lang: FALLBACK_LANG,
-                rate: rate // Pass the speed rate
-            }); 
-            chrome.runtime.sendMessage({ action: "reading_started" });
-
-        } else if (request.action === "get_summary") {
-            const summary = await fetchFromAIProxy('summarize', textToProcess);
-            if (summary) {
-                chrome.runtime.sendMessage({ action: "summary_result", summary: summary });
-            }
-        } else if (request.action === "multimodal_prompt") {
-            const answer = await fetchFromAIProxy('multimodal_prompt', textToProcess, {
-                prompt: request.prompt 
+            // --- Inject extraction function ---
+            const [result] = await chrome.scripting.executeScript({
+                target: { tabId },
+                func: extractArticleText,
             });
-            if (answer) {
-                chrome.runtime.sendMessage({ action: "prompt_result", answer: answer });
+
+            const textToProcess = result?.result;
+            if (!textToProcess || textToProcess.length < 100) {
+                chrome.runtime.sendMessage({ action: "reading_failed", message: "Could not extract article text." });
+                return;
             }
+
+            // --- Handle each action ---
+            if (request.action === "start_reading") {
+                chrome.tts.speak(textToProcess, { lang: FALLBACK_LANG, rate: request.rate || 1.0 });
+                chrome.runtime.sendMessage({ action: "reading_started" });
+
+            } else if (request.action === "get_summary") {
+                chrome.runtime.sendMessage({ action: "summary_result", summary: "⏳ Summarizing... (please wait)" });
+                const summary = await fetchFromAIProxy('summarize', textToProcess);
+                chrome.runtime.sendMessage({
+                    action: "summary_result",
+                    summary: summary || "❌ Failed to summarize. Please try again."
+                });
+
+            } else if (request.action === "multimodal_prompt") {
+                const answer = await fetchFromAIProxy('multimodal_prompt', textToProcess, { prompt: request.prompt });
+                chrome.runtime.sendMessage({
+                    action: "prompt_result",
+                    answer: answer || "❌ AI prompt failed. Try again."
+                });
+            }
+
+        } catch (err) {
+            console.error('SERVICE WORKER ERROR:', err);
+            chrome.runtime.sendMessage({
+                action: "reading_failed",
+                message: `Internal error: ${err.message}`
+            });
         }
     };
-    
+
     runAsync();
-    return true; // Keep the message port open for the asynchronous response.
+    return true;
 });
 
-// --- Function to be injected (Clean Scraper Logic - SYNCHRONIZED COPY) ---
+// --- Text Extraction Logic ---
 function extractArticleText() {
-    const MAX_SAFE_LENGTH = 4000; 
+    const MAX_SAFE_LENGTH = 4000;
     let finalContent = "";
 
-    // 1. Extract Headline
-    const headlineElement = document.querySelector('h1') || document.querySelector('h2');
-    if (headlineElement) {
-        finalContent += "HEADLINE: " + headlineElement.innerText.trim() + ". \n\n";
-    }
+    const headline = document.querySelector("h1, h2");
+    if (headline) finalContent += "HEADLINE: " + headline.innerText.trim() + ". ";
 
-    // 2. Extract Main Article Body using structural selectors
-    const selectors = ['article', '.entry-content', '.story-body', 'main', 'body'];
-    
-    for (const selector of selectors) {
-        const element = document.querySelector(selector);
-        
-        if (element && element.innerText.length > 500) { 
-            let text = element.innerText;
-            
-            // AGGRESSIVE FILTERING: Remove navigation, ads, and common irrelevant text
-            text = text.replace(/Download Lens Studio for Free|Powerful Accounting Software|Zoho Books|Get e-invoice compliant/gi, ''); 
-            text = text.replace(/ADVERTISEMENT|Advertisement|Share|Read More|Related News|Next|Previous|Topics|Partners|Subscribe|Sign In/gi, ''); 
-            text = text.replace(/Home|ePaper|India|UPSC|Premium|Entertainment|Politics|Sports|World|Explained|Opinion|Business|Kolkata|Lifestyle|Tech|Sections|Today's Paper|Newsletters/gi, ''); 
-            text = text.replace(/ENGLISH|தமிழ்|বাংলা|മലയാളം|ગુજરાતી|हिंदी|मराठी|BUSINESS|JOURNALISM OF COURAGE|Tues|Wed|Thu|Oct|2025|opens in new window|window|Skip to content|Copyright|All Rights Reserved/gi, ''); 
-
-            // Clean up formatting
-            text = text.replace(/[\r\n]+/g, ' '); 
-            text = text.replace(/\s{2,}/g, ' '); 
-            
+    const blocks = ["article", ".entry-content", ".story-body", "main", "body"];
+    for (const selector of blocks) {
+        const el = document.querySelector(selector);
+        if (el && el.innerText.length > 500) {
+            let text = el.innerText
+                .replace(/ADVERTISEMENT|Read More|Next|Previous|Subscribe|Sign In/gi, "")
+                .replace(/\s{2,}/g, " ")
+                .replace(/[\r\n]+/g, " ");
             finalContent += text.trim();
-            break; 
+            break;
         }
     }
-    
-    let fallbackText = finalContent.trim();
-    
-    // Fallback to body content if primary elements failed
-    if (fallbackText.length === 0) {
-        fallbackText = document.body.innerText;
-        fallbackText = fallbackText.replace(/ADVERTISEMENT|Skip to content|Home|ePaper|Subscribe|Sign In/gi, '');
-        fallbackText = fallbackText.replace(/[\r\n]+/g, ' '); 
-        fallbackText = fallbackText.replace(/\s{2,}/g, ' '); 
-    }
 
-    // Apply final TTS safety limit
-    return fallbackText.trim().substring(0, MAX_SAFE_LENGTH);
+    if (!finalContent) finalContent = document.body.innerText;
+    return finalContent.trim().substring(0, MAX_SAFE_LENGTH);
 }

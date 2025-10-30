@@ -1,81 +1,96 @@
-// =================================================================
-// FILE: api/ai-proxy.js (Vercel Serverless Function)
-// Purpose: Securely proxies requests from the Chrome Extension.
-// NOTE: This code simulates successful external API calls.
-// =================================================================
+// ====================================================================
+// FILE: api/ai-proxy.js
+// PURPOSE: Secure Cloud Proxy for SpeakPage AI Chrome Extension
+// BACKEND: Node.js (Vercel Serverless Function)
+// DEPENDENCIES: axios
+// ====================================================================
 
-// Vercel makes environment variables (secrets) available globally
-// We use these variables to confirm the secure link works.
-const PROMPT_KEY = process.env.PROMPT_KEY; 
-const TRANSLATOR_KEY = process.env.TRANSLATOR_KEY;
-const SUMMARIZER_KEY = process.env.SUMMARIZER_KEY;
+import axios from "axios";
 
-// Axios is needed for real deployment, though not for local simulation
-const axios = require('axios'); 
+export default async function handler(req, res) {
+  // --- 1. CORS (required for Chrome Extension requests) ---
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-// The main function handler for Vercel
-module.exports = async (request, response) => {
-    
-    // --- 1. CORS Configuration (CRITICAL FOR CHROME EXTENSIONS) ---
-    // This allows the cross-origin request from your unpacked extension to succeed.
-    response.setHeader('Access-Control-Allow-Origin', '*'); 
-    response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === "OPTIONS") return res.status(204).end();
 
-    if (request.method === 'OPTIONS') {
-        return response.status(204).end();
+  // --- 2. Quick health check ---
+  if (req.method === "GET") {
+    return res.status(200).json({
+      success: true,
+      message: "✅ SpeakPage AI Proxy (Node.js + Axios) is live.",
+    });
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ success: false, error: "Method Not Allowed" });
+  }
+
+  try {
+    // --- 3. Parse request body ---
+    const { action, text, prompt, targetLanguage } = req.body || {};
+
+    if (!action || !text) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: 'action' or 'text'.",
+      });
     }
-    
-    // Ensure we are processing a POST request with JSON content
-    if (request.method !== 'POST') {
-        return response.status(405).json({ success: false, error: 'Method Not Allowed. Use POST.' });
+
+    // --- 4. Setup model + API key ---
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    const model = "gpt-3.5-turbo"; // You can switch to "gpt-4-turbo" if available
+
+    // --- 5. Define system prompt dynamically based on action ---
+    let userPrompt = "";
+
+    switch (action) {
+      case "summarize":
+        userPrompt = `Summarize this webpage clearly and concisely:\n\n${text}`;
+        break;
+      case "translate":
+        userPrompt = `Translate the following text to ${targetLanguage || "Hindi"}:\n\n${text}`;
+        break;
+      case "multimodal_prompt":
+        userPrompt = `Use the following article as context and answer this question: ${prompt}\n\nArticle:\n${text}`;
+        break;
+      default:
+        return res.status(400).json({ success: false, error: "Invalid action." });
     }
 
-    // Attempt to read the JSON body sent from service_worker.js
-    const body = request.body;
+    // --- 6. Call OpenAI (or any LLM endpoint) securely via Axios ---
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model,
+        messages: [
+          { role: "system", content: "You are SpeakPage AI Assistant." },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 400,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+      }
+    );
 
-    // Check if the body exists and has necessary fields
-    if (!body || !body.action || !body.text) {
-        return response.status(400).json({ success: false, error: 'Missing action or input text in request.' });
-    }
+    const aiResponse = response.data.choices[0].message.content.trim();
 
-    const { action, text, targetLanguage, prompt } = body;
-    
-    // --- 2. Core Proxy Logic (SIMULATION) ---
-    try {
-        let simulatedResult;
-        
-        switch (action) {
-            case 'summarize':
-                // Simulates calling the Summarizer API (e.g., GPT-3.5)
-                simulatedResult = "The SpeakPage AI analyzed the document and generated a concise summary for the user, focusing on key arguments and conclusions.";
-                break;
-            
-            case 'translate':
-                // Simulates calling the Translation API (e.g., DeepL)
-                simulatedResult = `The original text was successfully sent to the external service for translation into ${targetLanguage || 'Spanish'} and returned to the user.`;
-                break;
-            
-            case 'multimodal_prompt':
-                // Simulates calling the Multimodal LLM (e.g., Gemini) with context
-                simulatedResult = `The AI successfully used the current webpage's context to answer your specific question: "${prompt}". This demonstrates multimodal architecture competence.`;
-                break;
-                
-            default:
-                return response.status(400).json({ success: false, error: 'Invalid AI action specified.' });
-        }
-
-        // --- 3. Send SUCCESS Response (JSON) ---
-        // This is the data the Chrome Extension's popup.js is waiting for
-        return response.status(200).json({ 
-            success: true, 
-            result: simulatedResult, 
-            type: action 
-        });
-
-    } catch (error) {
-        // Log the error to Vercel's console for debugging
-        console.error('SERVERLESS ERROR:', error.message);
-        return response.status(500).json({ success: false, error: 'Internal Server Error during proxy execution.' });
-    }
-};
+    // --- 7. Return the result to the extension ---
+    return res.status(200).json({
+      success: true,
+      result: aiResponse,
+      type: action,
+    });
+  } catch (error) {
+    console.error("Proxy Error:", error.response?.data || error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.response?.data?.error?.message || "Server error during AI request",
+    });
+  }
+}

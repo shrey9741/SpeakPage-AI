@@ -1,5 +1,21 @@
 {
+  "name": "speakpage-ai",
+  "version": "1.0.0",
+  "description": "AI-powered multimodal web reader and serverless proxy.",
+
+  
+  "type": "module", 
+
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  
   "dependencies": {
-    "firebase": "^12.4.0"
+    "axios": "^1.12.2"
+    
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": "20"
   }
 }
