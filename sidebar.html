@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SpeakPage AI — Sidebar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0e0e11;
+      font-family: 'DM Sans', sans-serif;
+      color: #c8c8e0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px;
+      background: #13131a;
+      border-bottom: 1px solid #1e1e2a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .logo-dot {
+      width: 26px; height: 26px; border-radius: 8px;
+      background: linear-gradient(135deg, #6c63ff, #a78bfa);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .logo-dot svg { width: 13px; height: 13px; stroke: white; fill: none; stroke-width: 2; }
+
+    .sidebar-header h1 { font-size: 13px; font-weight: 600; color: #e8e8f0; }
+    .sidebar-header p { font-size: 10px; color: #6b6b80; font-family: 'Space Mono', monospace; }
+
+    .content { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+
+    /* Result card */
+    .result-card {
+      background: #13131a;
+      border: 1px solid #1e1e2a;
+      border-radius: 13px;
+      overflow: hidden;
+      animation: slideIn 0.25s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 13px;
+      border-bottom: 1px solid #1e1e2a;
+    }
+
+    .card-icon { width: 22px; height: 22px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .card-icon svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    .card-icon.summary { background: #1e1a30; color: #a78bfa; }
+    .card-icon.simplify { background: #1a1508; color: #fbbf24; }
+    .card-icon.translate { background: #131f1f; color: #6ee7b7; }
+    .card-icon.prompt { background: #1a0d16; color: #f9a8d4; }
+
+    .card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'Space Mono', monospace; }
+    .card-title.summary { color: #a78bfa; }
+    .card-title.simplify { color: #fbbf24; }
+    .card-title.translate { color: #6ee7b7; }
+    .card-title.prompt { color: #f9a8d4; }
+
+    .card-body { padding: 13px; }
+
+    .card-prompt {
+      font-size: 11px; color: #6b6b80; font-style: italic;
+      margin-bottom: 8px; padding-bottom: 8px;
+      border-bottom: 1px solid #1e1e2a;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .card-text {
+      font-size: 13px; color: #c8c8e0; line-height: 1.7;
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    .card-text.loading { color: #4a4a60; font-style: italic; }
+    .card-text.error { color: #f87171; }
+
+    /* Loading wave */
+    .wave { display: inline-flex; gap: 3px; align-items: flex-end; height: 12px; vertical-align: middle; margin-right: 6px; }
+    .wave span { display: inline-block; width: 3px; border-radius: 2px; background: #6c63ff; animation: wave 1s ease-in-out infinite; }
+    .wave span:nth-child(2) { animation-delay: 0.15s; }
+    .wave span:nth-child(3) { animation-delay: 0.3s; }
+    .wave span:nth-child(4) { animation-delay: 0.45s; }
+    @keyframes wave {
+      0%, 100% { height: 4px; opacity: 0.4; }
+      50% { height: 12px; opacity: 1; }
+    }
+
+    /* Empty state */
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
+      color: #3a3a50; text-align: center; padding: 40px 20px;
+    }
+    .empty-state svg { width: 36px; height: 36px; stroke: #2a2a38; fill: none; stroke-width: 1.5; }
+    .empty-state p { font-size: 12px; line-height: 1.6; }
+    .empty-state span { font-family: 'Space Mono', monospace; font-size: 10px; color: #2a2a38; }
+
+    /* Clear button */
+    .clear-btn {
+      margin: 0 14px 14px; padding: 8px;
+      background: transparent; border: 1px solid #1e1e2a;
+      border-radius: 8px; color: #4a4a60; font-size: 11px;
+      font-family: 'DM Sans', sans-serif; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      display: none;
+    }
+    .clear-btn:hover { background: #13131a; color: #a0a0c0; }
+    .clear-btn.visible { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar-header">
+    <div class="logo-dot">
+      <svg viewBox="0 0 24 24">
+        <line x1="12" y1="3" x2="12" y2="21"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="6.34" y1="6.34" x2="17.66" y2="17.66"/>
+        <line x1="17.66" y1="6.34" x2="6.34" y2="17.66"/>
+      </svg>
+    </div>
+    <div>
+      <h1>SpeakPage AI</h1>
+      <p>on-device · gemini nano</p>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+    <div class="empty-state" id="emptyState">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <p>AI results will appear here.<br/>Use the popup to summarize, translate, simplify, or ask questions.</p>
+      <span>powered by gemini nano · on-device</span>
+    </div>
+  </div>
+
+  <button class="clear-btn" id="clearBtn">Clear all results</button>
+
+  <script src="sidebar.js"></script>
+</body>
+</html>

@@ -1,54 +1,121 @@
-// --- Function to be injected (Must be synchronized in both files) ---
-function extractArticleText() {
-    const MAX_SAFE_LENGTH = 4000; 
-    let finalContent = "";
+// =================================================================
+// FILE: content.js
+// SpeakPage AI v3.0 — Word highlight tracking during TTS
+// Injected into every page via manifest content_scripts
+// =================================================================
 
-    // Get the domain from the window object (accessible in content script)
-    const hostname = window.location.hostname;
-    
-    // ----------------------------------------------------
-    // --- 1. SITE-SPECIFIC SELECTOR MAPPING ---
-    // ----------------------------------------------------
-    let articleSelector = '';
-    
-    if (hostname.includes('indianexpress.com')) {
-        // Specific selector for the main article content on IE
-        articleSelector = '.full-details, .story-body'; 
-    } else if (hostname.includes('bbc.com')) {
-        // BBC articles often use a main content wrapper
-        articleSelector = '[data-component="text-block"], .ssrcss-180b0v9-Stack'; 
-    } else if (hostname.includes('timesofindia.indiatimes.com')) {
-        // TOI articles often use specific classes for the article body
-        articleSelector = '.main-article-content'; 
-    } else {
-        // Default fallback for generic sites/blogs
-        articleSelector = 'article, .entry-content, main';
+let articleText = '';
+let highlightOverlay = null;
+let articleElement = null;
+
+// --- Listen for messages from service worker ---
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'prepare_highlight') {
+        articleText = request.text;
+        setupHighlightOverlay();
     }
 
-    // --- 2. Extract Headline (Always try to get the headline first) ---
-    const headlineElement = document.querySelector('h1') || document.querySelector('h2');
-    if (headlineElement) {
-        finalContent += "HEADLINE: " + headlineElement.innerText.trim() + ". \n\n";
+    if (request.action === 'highlight_word') {
+        highlightWord(request.charIndex, request.length);
     }
 
-    // 3. --- Extract Main Article Body ---
-    const element = document.querySelector(articleSelector);
-    
-    if (element && element.innerText.length > 500) { 
-        let text = element.innerText;
-        
-        // --- AGGRESSIVE CLEANUP FILTERS (FINAL LAYER) ---
-        // These cleanup functions run regardless of the site, but after targeting.
-        text = text.replace(/ADVERTISEMENT|Advertisement|Share|Subscribe|Sign In/gi, ''); 
-        text = text.replace(/Home|ePaper|Menu|Next|Previous|Topics|Copyright|All Rights Reserved/gi, ''); 
-        
-        // Clean up formatting
-        text = text.replace(/[\r\n]+/g, ' '); 
-        text = text.replace(/\s{2,}/g, ' '); 
-        
-        finalContent += text.trim();
+    if (request.action === 'clear_highlight') {
+        clearHighlight();
     }
-    
-    // 4. Apply final TTS safety limit
-    return finalContent.trim().substring(0, MAX_SAFE_LENGTH);
+});
+
+// --- Create a floating highlight bar that follows reading position ---
+function setupHighlightOverlay() {
+    clearHighlight();
+
+    // Find the article element on the page
+    const selectors = [
+        'article', '.entry-content', '.post-content',
+        '.article-body', '.story-content', '.story-body',
+        '.full-details', 'main', '[role="main"]'
+    ];
+
+    for (const sel of selectors) {
+        const el = document.querySelector(sel);
+        if (el && el.innerText.length > 200) {
+            articleElement = el;
+            break;
+        }
+    }
+
+    // Create reading progress bar at top of page
+    const bar = document.createElement('div');
+    bar.id = 'speakpage-progress-bar';
+    bar.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        width: 0%;
+        background: linear-gradient(90deg, #6c63ff, #a78bfa);
+        z-index: 999999;
+        transition: width 0.3s ease;
+        pointer-events: none;
+    `;
+    document.body.appendChild(bar);
+    highlightOverlay = bar;
+}
+
+// --- Highlight current word / update progress bar ---
+function highlightWord(charIndex, length) {
+    if (!articleText || !highlightOverlay) return;
+
+    // Update progress bar
+    const progress = Math.min((charIndex / articleText.length) * 100, 100);
+    highlightOverlay.style.width = progress + '%';
+
+    // Scroll to keep reading position in view
+    if (articleElement) {
+        // Find paragraph elements and scroll to the one being read
+        const paragraphs = articleElement.querySelectorAll('p');
+        let charCount = 0;
+        for (const para of paragraphs) {
+            const paraLen = para.innerText.length;
+            if (charCount + paraLen >= charIndex) {
+                para.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Highlight the current paragraph subtly
+                document.querySelectorAll('.speakpage-active-para').forEach(el => {
+                    el.classList.remove('speakpage-active-para');
+                    el.style.backgroundColor = '';
+                    el.style.borderLeft = '';
+                    el.style.paddingLeft = '';
+                    el.style.transition = '';
+                });
+
+                para.classList.add('speakpage-active-para');
+                para.style.backgroundColor = 'rgba(108, 99, 255, 0.08)';
+                para.style.borderLeft = '3px solid #6c63ff';
+                para.style.paddingLeft = '8px';
+                para.style.transition = 'all 0.3s ease';
+                break;
+            }
+            charCount += paraLen;
+        }
+    }
+}
+
+// --- Clear all highlights ---
+function clearHighlight() {
+    // Remove progress bar
+    const bar = document.getElementById('speakpage-progress-bar');
+    if (bar) bar.remove();
+    highlightOverlay = null;
+
+    // Remove paragraph highlights
+    document.querySelectorAll('.speakpage-active-para').forEach(el => {
+        el.classList.remove('speakpage-active-para');
+        el.style.backgroundColor = '';
+        el.style.borderLeft = '';
+        el.style.paddingLeft = '';
+        el.style.transition = '';
+    });
+
+    articleElement = null;
+    articleText = '';
 }
