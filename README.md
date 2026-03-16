@@ -1,69 +1,29 @@
-# SpeakPage AI — Multimodal Web Reader
+# SpeakPage AI
 
-> A Chrome Extension that reads, summarizes, translates, and simplifies any webpage using AI — built for the **Google Chrome Built-in AI Challenge 2025**.
+A Chrome Extension that uses AI to read, summarize, translate, and simplify any webpage — with full text-to-speech and a persistent sidebar for results.
 
----
+## Features
 
-## 🌟 Features
+- **Read Aloud** - Reads the article aloud using Chrome TTS, skipping all ads and clutter
+- **Summarize** - Generate concise key-point summaries of any article
+- **Translate** - Translate page content into 11 languages including Hindi, Bengali, Tamil, and more
+- **Simplify** - Rewrite the article in plain, easy-to-understand language
+- **Ask AI** - Ask any question about the article and get a direct answer
+- **Read Simplified** - Listen to the simplified version aloud after simplifying
+- **Ad-free extraction** - Two-layer DOM surgery + regex cleanup removes ads before reading or processing
+- **Reading progress bar** - Tracks reading position and highlights the current paragraph on the page
+- **Sidebar panel** - All AI results appear in a persistent sidebar as stacked cards
 
-| Feature | Description |
-|---|---|
-| 🔊 **Read Aloud** | Reads the article content aloud using Chrome TTS, skipping all ads and clutter |
-| 🧠 **Summarize** | Extracts key points from any article instantly |
-| 🌐 **Translate** | Translates page content into 11 languages including Hindi, Bengali, Tamil, and more |
-| ✨ **Simplify** | Rewrites the article in plain, easy-to-understand language |
-| 💬 **Ask AI** | Ask any question about the article and get a concise answer |
-| 📖 **Read Simplified** | Listen to the simplified version aloud after simplifying |
-| 🎯 **Ad-free extraction** | Two-layer DOM surgery + regex cleanup removes ads before reading or processing |
-| 📊 **Reading progress bar** | Purple progress bar tracks reading position on the page |
-| 🗂️ **Sidebar panel** | All AI results appear in a persistent sidebar, stacked as cards |
+## Tech Stack
 
----
+- **Vanilla JS** - Lightweight, no build step required
+- **Chrome Manifest V3** - Latest extension format
+- **Chrome Built-in AI APIs** - Gemini Nano integration (Prompt API + Rewriter API)
+- **Groq API** - `llama-3.1-8b-instant` fallback via Vercel serverless proxy
+- **Chrome TTS** - Built-in text-to-speech with rate control
+- **Chrome SidePanel API** - Persistent results panel
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Chrome Extension                      │
-│                                                         │
-│   popup.html/js  ──►  service_worker.js                 │
-│        │                    │                           │
-│        │              extractArticleText()              │
-│        │              (injected into tab)               │
-│        │                    │                           │
-│        ▼                    ▼                           │
-│   sidebar.html/js    Groq API (Vercel Proxy)            │
-│   (results panel)    llama-3.1-8b-instant               │
-│                             │                           │
-│   content.js  ◄─────────────┘                          │
-│   (TTS highlight + progress bar)                        │
-└─────────────────────────────────────────────────────────┘
-```
-
-**Communication flow:**
-1. User clicks button in `popup.js` → opens sidebar (user gesture)
-2. `popup.js` sends message to `service_worker.js` with `tabId`
-3. Service worker injects `extractArticleText()` into the active tab
-4. Cleaned article text is sent to Groq API via Vercel serverless proxy
-5. Result is written to `chrome.storage.local` → picked up by `sidebar.js`
-6. For TTS: `content.js` receives word positions and highlights paragraphs
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Extension | Chrome Manifest V3 |
-| AI Backend | Groq API (`llama-3.1-8b-instant`) |
-| Proxy | Vercel Serverless Functions (Node.js) |
-| TTS | Chrome built-in `chrome.tts` API |
-| Sidebar | Chrome `sidePanel` API |
-| Styling | Custom dark theme (DM Sans + Space Mono) |
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 SpeakPage-AI/
@@ -82,55 +42,120 @@ SpeakPage-AI/
 └── icon128.png
 ```
 
----
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
+
+- Node.js 18+ and npm
 - Google Chrome (version 114+)
-- Node.js 18+
 - [Vercel CLI](https://vercel.com/docs/cli) — `npm i -g vercel`
 - [Groq API key](https://console.groq.com) (free)
 
-### 1. Clone the repository
+### Installation
 
-```bash
+1. Clone the repository:
+
+```
 git clone https://github.com/shrey9741/SpeakPage-AI.git
 cd SpeakPage-AI
 ```
 
-### 2. Deploy the backend proxy to Vercel
+2. Deploy the backend proxy:
 
-```bash
+```
 vercel login
-vercel env add GROQ_API_KEY   # paste your Groq API key
+vercel env add GROQ_API_KEY
 vercel --prod
 ```
 
-Copy the production URL (e.g. `https://speak-page-xyz.vercel.app`).
+3. Update the proxy URL in `service_worker.js` line 8:
 
-### 3. Update the proxy URL
-
-In `service_worker.js`, line 8:
-
-```js
+```
 const PROXY_URL = 'https://your-deployment.vercel.app/api/ai-proxy';
 ```
 
-### 4. Load the extension in Chrome
+### Loading in Chrome
 
-1. Go to `chrome://extensions/`
-2. Enable **Developer mode** (top right)
-3. Click **Load unpacked**
+1. Open Chrome and navigate to `chrome://extensions/`
+2. Enable "Developer mode" (toggle in top-right corner)
+3. Click "Load unpacked"
 4. Select the `SpeakPage-AI/` folder
 
-### 5. Test it
+## Usage
 
-Open any news article → click the SpeakPage AI icon → try each feature.
+1. **Open any article** — navigate to any news or blog page
+2. **Click the extension icon** — the SpeakPage AI popup opens
+3. **Choose an action:**
+   - 🧠 Summarize
+   - ✨ Simplify
+   - 🌐 Translate
+   - 💬 Ask AI
+   - 🔊 Read Aloud
+4. **View results** — the sidebar opens automatically with AI results
 
----
+## Chrome Built-in AI Setup
 
-## 🌍 Supported Languages (Translation)
+Chrome's built-in AI features are currently experimental. To enable them:
+
+1. Navigate to `chrome://flags/#optimization-guide-on-device-model` → Enable **BypassPerfRequirement**
+2. Navigate to `chrome://flags/#prompt-api-for-gemini-nano` → Enable
+3. Navigate to `chrome://flags/#rewriter-api-for-gemini-nano` → Enable
+4. Restart Chrome
+5. Visit `chrome://components/`
+6. Find "Optimization Guide On Device Model" and click "Check for update"
+
+## API Overview
+
+### Prompt API
+
+```js
+const session = await ai.languageModel.create({ systemPrompt: '...' });
+const result = await session.prompt(`Article:\n${text}\n\nQuestion: ${userPrompt}`);
+session.destroy();
+```
+
+### Rewriter API
+
+```js
+const rewriter = await ai.rewriter.create({
+  tone: 'as-is',
+  format: 'plain-text',
+  sharedContext: 'Simplify for a 10-year-old'
+});
+const result = await rewriter.rewrite(text);
+rewriter.destroy();
+```
+
+### Groq Fallback (via Vercel Proxy)
+
+```js
+const response = await fetch(PROXY_URL, {
+  method: 'POST',
+  body: JSON.stringify({ action: 'summarize', text })
+});
+const { result } = await response.json();
+```
+
+## Chrome Built-in AI Integration
+
+SpeakPage AI is integrated with Chrome's Built-in AI (Gemini Nano) APIs with intelligent fallbacks.
+
+### Real AI Processing
+
+- ✅ **Prompt API** — Ask AI, summarize fallback, translate fallback
+- ✅ **Rewriter API** — Simplify language
+- ✅ **Smart Fallbacks** — Groq API when Gemini Nano is unavailable
+
+### Intelligent Fallbacks
+
+Each module checks AI availability and provides:
+
+- Real Gemini Nano results when available
+- Automatic fallback to Groq API (`llama-3.1-8b-instant`) when unavailable
+- Helpful error messages with setup instructions
+- No broken experience — works on all hardware
+
+## Supported Languages (Translation)
 
 | Language | Code |
 |---|---|
@@ -146,45 +171,63 @@ Open any news article → click the SpeakPage AI icon → try each feature.
 | Arabic | `ar` |
 | Japanese | `ja` |
 
----
+## Architecture
 
-## 🗞️ Supported News Sites (Optimised Selectors)
+```
+User Click → popup.js → openSidebar() [user gesture]
+                  ↓
+           service_worker.js
+                  ↓
+        extractArticleText()
+        (injected into tab)
+                  ↓
+         Two-layer ad removal
+                  ↓
+      ┌───────────┴───────────┐
+      ↓                       ↓
+Chrome Built-in AI         Groq API
+(Gemini Nano)           (Vercel Proxy)
+      ↓                       ↓
+      └───────────┬───────────┘
+                  ↓
+            sidebar.js
+          (result cards)
+                  ↓
+            content.js
+      (highlight + progress bar)
+```
 
-Site-specific CSS selectors ensure clean article extraction with no nav or ad contamination:
+## Performance
 
-- Indian Express
-- NDTV
-- BBC
-- The Hindu
-- Hindustan Times
-- Times of India
-- Reuters
-- The Guardian
-- Any generic blog/article page (fallback)
+With Groq API:
 
----
+- **Summarize**: 500–1500ms
+- **Translate**: 600–2000ms
+- **Simplify**: 800–2500ms
+- **Ask AI**: 500–1500ms
+- **Read Aloud**: Instant (on-device TTS)
 
-## 🔒 Privacy & Security
+## Requirements
 
-- **No data stored** — article text is processed in real time and never persisted on the server
-- **API key secured** — Groq key lives only in Vercel environment variables, never in extension code
-- **All processing scoped to active tab** — extension only reads the page you're currently on
-- **No tracking, no analytics**
+- Chrome version 114+
+- For Gemini Nano: Chrome 127+, ~4GB free RAM, ~5GB disk space, flags enabled
+- For Groq fallback: Internet connection + Vercel deployment
 
----
+## Testing
 
-## 🧩 Chrome APIs Used
+The extension works in two modes:
 
-| API | Purpose |
-|---|---|
-| `chrome.tts` | Text-to-speech with rate control |
-| `chrome.sidePanel` | Persistent results panel |
-| `chrome.scripting` | Inject article extraction function into tab |
-| `chrome.storage.local` | Reliable popup ↔ service worker communication |
-| `chrome.tabs` | Get active tab ID |
-| `chrome.notifications` | Error notifications |
+### 1. With Gemini Nano (Recommended)
 
----
+- On-device processing
+- Private — no data leaves the browser
+- Works offline
+
+### 2. With Groq API (Fallback)
+
+- Cloud-based via secure Vercel proxy
+- Works on any hardware
+- API key never exposed to the extension
 
 ## 🏆 Built For
 
@@ -192,39 +235,34 @@ Site-specific CSS selectors ensure clean article extraction with no nav or ad co
 
 SpeakPage AI was designed around Chrome's Built-in AI APIs (Gemini Nano) for on-device, private, offline AI. It uses Groq API as a high-performance fallback for devices where Gemini Nano is unavailable, ensuring the extension works for all users regardless of hardware.
 
----
+## Privacy & Security
 
-## 📸 Screenshots
+- No data stored — article text is processed in real time and never persisted
+- API key secured — Groq key lives only in Vercel environment variables, never in extension code
+- All processing scoped to the active tab only
+- No tracking, no analytics
+- Gemini Nano mode: fully on-device, zero network requests
 
-> Open any news article → click the extension icon
+## Notes
 
-**Popup**
+- Chrome's Built-in AI APIs are experimental and subject to change
+- The extension works without Gemini Nano via Groq fallback
+- Requires Chrome 127+ for full Gemini Nano functionality
+- Model download required on first Gemini Nano use (~2GB, one-time)
+- All Gemini Nano processing happens on-device (privacy-friendly)
 
-The compact dark popup gives access to all 5 AI actions plus TTS controls.
-
-**Sidebar**
-
-AI results appear as stacked cards in the sidebar panel — summary, translation, simplification, and Q&A all visible at once.
-
-**Reading highlight**
-
-A purple progress bar tracks reading position at the top of the page. The current paragraph is highlighted and auto-scrolled into view.
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change.
-
----
-
-## 📄 License
+## License
 
 MIT
 
----
+## Contributing
 
-## 👤 Author
+Contributions are welcome! Please open an issue or submit a pull request.
 
-**Shrey** — 3rd year BTech IT student  
-GitHub: [@shrey9741](https://github.com/shrey9741)
+## Credits
+
+Built with Chrome's Built-in AI (Gemini Nano) • Groq API • Vercel • Chrome MV3
+
+## About
+
+SpeakPage AI is a Chrome Extension that reads, summarizes, translates, and simplifies any webpage using AI — with text-to-speech, paragraph highlighting, and a persistent sidebar panel. Built for the Google Chrome Built-in AI Challenge 2025 using Gemini Nano APIs with Groq fallback for maximum compatibility.
