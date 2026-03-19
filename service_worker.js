@@ -4,7 +4,7 @@
 // FIX: All sidePanel.open() removed — handled by popup.js instead
 // =================================================================
 
-const PROXY_URL = 'https://speak-page-6j20ep6kw-shreykr03-4807s-projects.vercel.app';
+const PROXY_URL = 'https://speak-page-ai.vercel.app/api/ai-proxy';
 const FALLBACK_LANG = 'en-IN';
 
 let keepAliveInterval = null;
