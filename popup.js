@@ -1,3 +1,5 @@
+// @ts-nocheck
+// ```javascript
 // =================================================================
 // FILE: popup.js — SpeakPage AI v3.0
 // =================================================================
@@ -70,7 +72,6 @@ function sendMsg(message) {
 // Central event handler
 // =================================================================
 function handleSWEvent(request) {
-  // ✅ FIX: null check — storage listener can fire with undefined
   if (!request || !request.action) return;
 
   switch (request.action) {
@@ -79,14 +80,20 @@ function handleSWEvent(request) {
       readBtn.disabled = true;
       pauseResumeBtn.disabled = false;
       stopBtn.disabled = false;
+      chrome.storage.local.set({ tts_state: 'playing' }); // ✅ ADDED
       break;
+
     case "reading_finished":
+      chrome.storage.local.remove('tts_state'); // ✅ ADDED
       resetTTS('✅ Reading completed.');
       break;
+
     case "reading_failed":
+      chrome.storage.local.remove('tts_state'); // ✅ ADDED
       resetTTS(`❌ ${request.message}`);
       lockAI(false);
       break;
+
     case "task_done":
       lockAI(false);
       setStatus('✅ Done — check the sidebar.', 'done');
@@ -94,6 +101,7 @@ function handleSWEvent(request) {
       simplifyBtn.textContent = 'Simplify';
       translateBtn.textContent = 'Translate';
       break;
+
     case "simplify_ready":
       simplifiedText = request.text;
       readSimplifiedBtn.classList.add('visible');
@@ -101,6 +109,7 @@ function handleSWEvent(request) {
       setStatus('✅ Simplified — check the sidebar.', 'done');
       simplifyBtn.textContent = 'Simplify';
       break;
+
     default:
       break;
   }
@@ -114,7 +123,6 @@ chrome.runtime.onMessage.addListener((request) => {
 // Storage listener
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.speakpage_event) {
-    // ✅ FIX: check newValue exists before handling
     const val = changes.speakpage_event.newValue;
     if (val) {
       handleSWEvent(val);
@@ -123,16 +131,28 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-// On popup open
+// =================================================================
+// On popup open (UPDATED)
+// =================================================================
 document.addEventListener('DOMContentLoaded', () => {
-  chrome.storage.local.get(['speakpage_event', 'simplified_text'], (data) => {
+  chrome.storage.local.get(['speakpage_event', 'simplified_text', 'tts_state'], (data) => {
+
     if (data.speakpage_event) {
       handleSWEvent(data.speakpage_event);
       chrome.storage.local.remove('speakpage_event');
     }
+
     if (data.simplified_text) {
       simplifiedText = data.simplified_text;
       readSimplifiedBtn.classList.add('visible');
+    }
+
+    // ✅ ADDED: restore TTS state
+    if (data.tts_state === 'playing') {
+      readBtn.disabled = true;
+      pauseResumeBtn.disabled = false;
+      stopBtn.disabled = false;
+      setStatus('<span class="wave"><span></span><span></span><span></span><span></span></span>Reading aloud...', 'active');
     }
   });
 });
@@ -176,6 +196,21 @@ translateBtn.addEventListener('click', async () => {
     await openSidebar();
     sendMsg({ action: "translate_page", targetLang: lang });
   }
+});
+
+// ✅ ADDED translateGoBtn handler
+document.getElementById('translateGoBtn').addEventListener('click', async () => {
+  const lang = langSelect.value;
+  const langName = langSelect.options[langSelect.selectedIndex].text;
+
+  setLoading(`Translating to ${langName}...`);
+  lockAI(true);
+
+  langSection.style.display = 'none';
+  isLangVisible = false;
+
+  await openSidebar();
+  sendMsg({ action: "translate_page", targetLang: lang });
 });
 
 langSelect.addEventListener('change', () => {
