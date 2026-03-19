@@ -38,43 +38,63 @@
     .sidebar-header h1 { font-size: 13px; font-weight: 600; color: #e8e8f0; }
     .sidebar-header p { font-size: 10px; color: #6b6b80; font-family: 'Space Mono', monospace; }
 
-    .content { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;        
+    }
 
     /* Result card */
     .result-card {
       background: #13131a;
       border: 1px solid #1e1e2a;
       border-radius: 13px;
-      overflow: hidden;
-      animation: slideIn 0.25s ease;
+      overflow: visible;   
+      flex-shrink: 0;      
+      animation: slideIn 0.25s ease forwards;
     }
 
     @keyframes slideIn {
       from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .card-header {
       display: flex; align-items: center; gap: 8px;
       padding: 10px 13px;
       border-bottom: 1px solid #1e1e2a;
+      border-radius: 13px 13px 0 0;
+      background: #13131a;
     }
 
-    .card-icon { width: 22px; height: 22px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .card-icon {
+      width: 22px; height: 22px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
     .card-icon svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
 
-    .card-icon.summary { background: #1e1a30; color: #a78bfa; }
-    .card-icon.simplify { background: #1a1508; color: #fbbf24; }
+    .card-icon.summary   { background: #1e1a30; color: #a78bfa; }
+    .card-icon.simplify  { background: #1a1508; color: #fbbf24; }
     .card-icon.translate { background: #131f1f; color: #6ee7b7; }
-    .card-icon.prompt { background: #1a0d16; color: #f9a8d4; }
+    .card-icon.prompt    { background: #1a0d16; color: #f9a8d4; }
 
-    .card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'Space Mono', monospace; }
-    .card-title.summary { color: #a78bfa; }
-    .card-title.simplify { color: #fbbf24; }
+    .card-title {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; font-family: 'Space Mono', monospace;
+    }
+    .card-title.summary   { color: #a78bfa; }
+    .card-title.simplify  { color: #fbbf24; }
     .card-title.translate { color: #6ee7b7; }
-    .card-title.prompt { color: #f9a8d4; }
+    .card-title.prompt    { color: #f9a8d4; }
 
-    .card-body { padding: 13px; }
+    .card-body {
+      padding: 13px;
+      border-radius: 0 0 13px 13px;
+      background: #13131a;
+    }
 
     .card-prompt {
       font-size: 11px; color: #6b6b80; font-style: italic;
@@ -87,9 +107,8 @@
       font-size: 13px; color: #c8c8e0; line-height: 1.7;
       white-space: pre-wrap; word-break: break-word;
     }
-
     .card-text.loading { color: #4a4a60; font-style: italic; }
-    .card-text.error { color: #f87171; }
+    .card-text.error   { color: #f87171; }
 
     /* Loading wave */
     .wave { display: inline-flex; gap: 3px; align-items: flex-end; height: 12px; vertical-align: middle; margin-right: 6px; }
@@ -99,7 +118,7 @@
     .wave span:nth-child(4) { animation-delay: 0.45s; }
     @keyframes wave {
       0%, 100% { height: 4px; opacity: 0.4; }
-      50% { height: 12px; opacity: 1; }
+      50%       { height: 12px; opacity: 1; }
     }
 
     /* Empty state */
@@ -109,7 +128,7 @@
       color: #3a3a50; text-align: center; padding: 40px 20px;
     }
     .empty-state svg { width: 36px; height: 36px; stroke: #2a2a38; fill: none; stroke-width: 1.5; }
-    .empty-state p { font-size: 12px; line-height: 1.6; }
+    .empty-state p    { font-size: 12px; line-height: 1.6; }
     .empty-state span { font-family: 'Space Mono', monospace; font-size: 10px; color: #2a2a38; }
 
     /* Clear button */
@@ -120,8 +139,9 @@
       font-family: 'DM Sans', sans-serif; cursor: pointer;
       transition: background 0.15s, color 0.15s;
       display: none;
+      flex-shrink: 0;
     }
-    .clear-btn:hover { background: #13131a; color: #a0a0c0; }
+    .clear-btn:hover  { background: #13131a; color: #a0a0c0; }
     .clear-btn.visible { display: block; }
   </style>
 </head>

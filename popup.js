@@ -1,12 +1,12 @@
-// @ts-nocheck
-// ```javascript
 // =================================================================
 // FILE: popup.js — SpeakPage AI v3.0
+// FIX: Added translate Go button + persist TTS state across popup reopens
 // =================================================================
 
 const summarizeBtn      = document.getElementById('summarizeBtn');
 const simplifyBtn       = document.getElementById('simplifyBtn');
 const translateBtn      = document.getElementById('translateBtn');
+const translateGoBtn    = document.getElementById('translateGoBtn');
 const promptToggleBtn   = document.getElementById('promptToggleBtn');
 const promptSection     = document.getElementById('promptSection');
 const langSection       = document.getElementById('langSection');
@@ -80,20 +80,17 @@ function handleSWEvent(request) {
       readBtn.disabled = true;
       pauseResumeBtn.disabled = false;
       stopBtn.disabled = false;
-      chrome.storage.local.set({ tts_state: 'playing' }); // ✅ ADDED
+      chrome.storage.local.set({ tts_state: 'playing' });
       break;
-
     case "reading_finished":
-      chrome.storage.local.remove('tts_state'); // ✅ ADDED
+      chrome.storage.local.remove('tts_state');
       resetTTS('✅ Reading completed.');
       break;
-
     case "reading_failed":
-      chrome.storage.local.remove('tts_state'); // ✅ ADDED
+      chrome.storage.local.remove('tts_state');
       resetTTS(`❌ ${request.message}`);
       lockAI(false);
       break;
-
     case "task_done":
       lockAI(false);
       setStatus('✅ Done — check the sidebar.', 'done');
@@ -101,7 +98,6 @@ function handleSWEvent(request) {
       simplifyBtn.textContent = 'Simplify';
       translateBtn.textContent = 'Translate';
       break;
-
     case "simplify_ready":
       simplifiedText = request.text;
       readSimplifiedBtn.classList.add('visible');
@@ -109,7 +105,6 @@ function handleSWEvent(request) {
       setStatus('✅ Simplified — check the sidebar.', 'done');
       simplifyBtn.textContent = 'Simplify';
       break;
-
     default:
       break;
   }
@@ -131,23 +126,18 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-// =================================================================
-// On popup open (UPDATED)
-// =================================================================
+// On popup open
 document.addEventListener('DOMContentLoaded', () => {
   chrome.storage.local.get(['speakpage_event', 'simplified_text', 'tts_state'], (data) => {
-
     if (data.speakpage_event) {
       handleSWEvent(data.speakpage_event);
       chrome.storage.local.remove('speakpage_event');
     }
-
     if (data.simplified_text) {
       simplifiedText = data.simplified_text;
       readSimplifiedBtn.classList.add('visible');
     }
-
-    // ✅ ADDED: restore TTS state
+    // Restore TTS buttons if reading was active when popup was closed
     if (data.tts_state === 'playing') {
       readBtn.disabled = true;
       pauseResumeBtn.disabled = false;
@@ -178,37 +168,25 @@ simplifyBtn.addEventListener('click', async () => {
   sendMsg({ action: "simplify_page" });
 });
 
-translateBtn.addEventListener('click', async () => {
+translateBtn.addEventListener('click', () => {
   if (!isLangVisible) {
     langSection.style.display = 'block';
     isLangVisible = true;
     promptSection.style.display = 'none';
     isPromptVisible = false;
-    translateBtn.querySelector('.label').textContent = 'Go →';
   } else {
-    const lang = langSelect.value;
-    const langName = langSelect.options[langSelect.selectedIndex].text;
-    setLoading(`Translating to ${langName}...`);
-    lockAI(true);
     langSection.style.display = 'none';
     isLangVisible = false;
-    translateBtn.querySelector('.label').textContent = 'Translate';
-    await openSidebar();
-    sendMsg({ action: "translate_page", targetLang: lang });
   }
 });
 
-// ✅ ADDED translateGoBtn handler
-document.getElementById('translateGoBtn').addEventListener('click', async () => {
+translateGoBtn.addEventListener('click', async () => {
   const lang = langSelect.value;
   const langName = langSelect.options[langSelect.selectedIndex].text;
-
   setLoading(`Translating to ${langName}...`);
   lockAI(true);
-
   langSection.style.display = 'none';
   isLangVisible = false;
-
   await openSidebar();
   sendMsg({ action: "translate_page", targetLang: lang });
 });
@@ -264,6 +242,7 @@ pauseResumeBtn.addEventListener('click', () => {
 });
 
 stopBtn.addEventListener('click', () => {
+  chrome.storage.local.remove('tts_state'); // ← critical fix
   resetTTS('⏹️ Reading stopped.');
   sendMsg({ action: "stop_reading" });
 });

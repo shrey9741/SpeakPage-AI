@@ -1,663 +1,349 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SpeakPage AI</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Mono&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SpeakPage AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-      body {
-        width: 360px;
-        background: #0e0e11;
-        font-family: "DM Sans", sans-serif;
-        color: #c8c8e0;
-      }
+    body {
+      width: 360px;
+      background: #0e0e11;
+      font-family: 'DM Sans', sans-serif;
+      color: #c8c8e0;
+    }
 
-      .header {
-        padding: 14px 16px;
-        background: #13131a;
-        border-bottom: 1px solid #1e1e2a;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+    .header {
+      padding: 14px 16px;
+      background: #13131a;
+      border-bottom: 1px solid #1e1e2a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-      .logo-dot {
-        width: 30px;
-        height: 30px;
-        border-radius: 9px;
-        background: linear-gradient(135deg, #6c63ff, #a78bfa);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-      .logo-dot svg {
-        width: 15px;
-        height: 15px;
-        stroke: white;
-        fill: none;
-        stroke-width: 2;
-      }
+    .logo-dot {
+      width: 30px; height: 30px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #6c63ff, #a78bfa);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo-dot svg { width: 15px; height: 15px; stroke: white; fill: none; stroke-width: 2; }
 
-      .header-text h1 {
-        font-size: 13px;
-        font-weight: 600;
-        color: #e8e8f0;
-      }
-      .header-text p {
-        font-size: 10px;
-        color: #6b6b80;
-        font-family: "Space Mono", monospace;
-        margin-top: 1px;
-      }
+    .header-text h1 { font-size: 13px; font-weight: 600; color: #e8e8f0; }
+    .header-text p  { font-size: 10px; color: #6b6b80; font-family: 'Space Mono', monospace; margin-top: 1px; }
 
-      .status-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #4ade80;
-        margin-left: auto;
-        box-shadow: 0 0 6px #4ade8088;
-      }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #4ade80; margin-left: auto;
+      box-shadow: 0 0 6px #4ade8088;
+    }
 
-      .body {
-        padding: 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
+    .body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 
-      .section-label {
-        font-size: 10px;
-        font-weight: 600;
-        letter-spacing: 0.1em;
-        color: #4a4a60;
-        text-transform: uppercase;
-        margin-bottom: 6px;
-        font-family: "Space Mono", monospace;
-      }
+    .section-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+      color: #4a4a60; text-transform: uppercase;
+      margin-bottom: 6px; font-family: 'Space Mono', monospace;
+    }
 
-      /* AI Action buttons grid */
-      .ai-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
+    /* AI Action buttons grid */
+    .ai-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
 
-      .btn-ai {
-        padding: 11px 10px;
-        background: #13131a;
-        border: 1px solid #1e1e2a;
-        border-radius: 11px;
-        color: #a0a0c0;
-        font-size: 12px;
-        font-weight: 500;
-        font-family: "DM Sans", sans-serif;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-        transition:
-          background 0.15s,
-          border-color 0.15s,
-          color 0.15s,
-          transform 0.1s;
-      }
-      .btn-ai svg {
-        width: 16px;
-        height: 16px;
-        stroke: currentColor;
-        fill: none;
-        stroke-width: 1.8;
-      }
-      .btn-ai span.label {
-        font-size: 11px;
-        font-weight: 500;
-      }
-      .btn-ai span.sub {
-        font-size: 9.5px;
-        color: #4a4a60;
-        font-family: "Space Mono", monospace;
-      }
+    .btn-ai {
+      padding: 11px 10px;
+      background: #13131a;
+      border: 1px solid #1e1e2a;
+      border-radius: 11px;
+      color: #a0a0c0;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+    }
+    .btn-ai svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+    .btn-ai span.label { font-size: 11px; font-weight: 500; }
+    .btn-ai span.sub   { font-size: 9.5px; color: #4a4a60; font-family: 'Space Mono', monospace; }
 
-      .btn-ai.summarize {
-        color: #a78bfa;
-        border-color: #2e2a45;
-      }
-      .btn-ai.summarize:hover:not(:disabled) {
-        background: #1a1830;
-        border-color: #6c63ff55;
-        transform: translateY(-1px);
-      }
+    .btn-ai.summarize  { color: #a78bfa; border-color: #2e2a45; }
+    .btn-ai.summarize:hover:not(:disabled)  { background: #1a1830; border-color: #6c63ff55; transform: translateY(-1px); }
 
-      .btn-ai.translate {
-        color: #6ee7b7;
-        border-color: #1a3030;
-      }
-      .btn-ai.translate:hover:not(:disabled) {
-        background: #131f1f;
-        border-color: #1d9e7555;
-        transform: translateY(-1px);
-      }
+    .btn-ai.translate  { color: #6ee7b7; border-color: #1a3030; }
+    .btn-ai.translate:hover:not(:disabled)  { background: #131f1f; border-color: #1d9e7555; transform: translateY(-1px); }
 
-      .btn-ai.simplify {
-        color: #fbbf24;
-        border-color: #302510;
-      }
-      .btn-ai.simplify:hover:not(:disabled) {
-        background: #1a1508;
-        border-color: #ba751755;
-        transform: translateY(-1px);
-      }
+    .btn-ai.simplify   { color: #fbbf24; border-color: #302510; }
+    .btn-ai.simplify:hover:not(:disabled)   { background: #1a1508; border-color: #ba751755; transform: translateY(-1px); }
 
-      .btn-ai.prompt-btn {
-        color: #f9a8d4;
-        border-color: #2d1525;
-      }
-      .btn-ai.prompt-btn:hover:not(:disabled) {
-        background: #1a0d16;
-        border-color: #d4537e55;
-        transform: translateY(-1px);
-      }
+    .btn-ai.prompt-btn { color: #f9a8d4; border-color: #2d1525; }
+    .btn-ai.prompt-btn:hover:not(:disabled) { background: #1a0d16; border-color: #d4537e55; transform: translateY(-1px); }
 
-      .btn-ai:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
-        transform: none;
-      }
+    .btn-ai:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 
-      /* Translate language row */
-      .lang-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 6px;
-      }
-      .lang-row label {
-        font-size: 11px;
-        color: #6b6b80;
-        white-space: nowrap;
-      }
-      .lang-select {
-        flex: 1;
-        background: #13131a;
-        border: 1px solid #1e1e2a;
-        border-radius: 8px;
-        color: #c8c8e0;
-        padding: 6px 10px;
-        font-size: 12px;
-        font-family: "DM Sans", sans-serif;
-        outline: none;
-        cursor: pointer;
-      }
+    /* Translate language row */
+    .lang-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 6px;
+    }
+    .lang-row label { font-size: 11px; color: #6b6b80; white-space: nowrap; }
+    .lang-select {
+      flex: 1; background: #13131a; border: 1px solid #1e1e2a;
+      border-radius: 8px; color: #c8c8e0; padding: 6px 10px;
+      font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; cursor: pointer;
+    }
 
-      /* Prompt input */
-      .prompt-section {
-        background: #13131a;
-        border: 1px solid #1e1e2a;
-        border-radius: 13px;
-        padding: 11px 13px;
-      }
-      .prompt-input {
-        width: 100%;
-        background: #0e0e11;
-        border: 1px solid #2a2a38;
-        border-radius: 8px;
-        color: #c8c8e0;
-        padding: 9px 11px;
-        font-size: 12px;
-        font-family: "DM Sans", sans-serif;
-        resize: none;
-        outline: none;
-        line-height: 1.5;
-        margin-bottom: 8px;
-      }
-      .prompt-input::placeholder {
-        color: #3a3a50;
-      }
-      .prompt-input:focus {
-        border-color: #6c63ff66;
-      }
+    /* Go button next to language selector */
+    .btn-go {
+      padding: 6px 12px;
+      background: #1a1830;
+      border: 1px solid #6c63ff55;
+      border-radius: 8px;
+      color: #a78bfa;
+      font-size: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-go:hover { background: #252040; border-color: #6c63ff; }
 
-      .btn-ask {
-        width: 100%;
-        padding: 8px 14px;
-        background: transparent;
-        border: 1px solid #6c63ff55;
-        border-radius: 8px;
-        color: #a78bfa;
-        font-size: 12px;
-        font-weight: 500;
-        font-family: "DM Sans", sans-serif;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        transition:
-          background 0.15s,
-          border-color 0.15s;
-      }
-      .btn-ask:hover:not(:disabled) {
-        background: #1a1a30;
-        border-color: #6c63ff;
-      }
-      .btn-ask:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-      }
+    /* Prompt input */
+    .prompt-section {
+      background: #13131a; border: 1px solid #1e1e2a;
+      border-radius: 13px; padding: 11px 13px;
+    }
+    .prompt-input {
+      width: 100%; background: #0e0e11; border: 1px solid #2a2a38;
+      border-radius: 8px; color: #c8c8e0; padding: 9px 11px;
+      font-size: 12px; font-family: 'DM Sans', sans-serif;
+      resize: none; outline: none; line-height: 1.5; margin-bottom: 8px;
+    }
+    .prompt-input::placeholder { color: #3a3a50; }
+    .prompt-input:focus { border-color: #6c63ff66; }
 
-      /* TTS section */
-      .tts-row {
-        background: #13131a;
-        border: 1px solid #1e1e2a;
-        border-radius: 13px;
-        padding: 11px 13px;
-      }
+    .btn-ask {
+      width: 100%; padding: 8px 14px; background: transparent;
+      border: 1px solid #6c63ff55; border-radius: 8px; color: #a78bfa;
+      font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-ask:hover:not(:disabled) { background: #1a1a30; border-color: #6c63ff; }
+    .btn-ask:disabled { opacity: 0.4; cursor: not-allowed; }
 
-      .speed-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 10px;
-      }
-      .speed-row label {
-        font-size: 12px;
-        color: #6b6b80;
-        white-space: nowrap;
-      }
-      .speed-select {
-        flex: 1;
-        background: #0e0e11;
-        border: 1px solid #2a2a38;
-        border-radius: 8px;
-        color: #c8c8e0;
-        padding: 6px 10px;
-        font-size: 12px;
-        font-family: "DM Sans", sans-serif;
-        outline: none;
-        cursor: pointer;
-      }
+    /* TTS section */
+    .tts-row {
+      background: #13131a; border: 1px solid #1e1e2a;
+      border-radius: 13px; padding: 11px 13px;
+    }
 
-      .tts-btns {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 7px;
-      }
+    .speed-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    }
+    .speed-row label { font-size: 12px; color: #6b6b80; white-space: nowrap; }
+    .speed-select {
+      flex: 1; background: #0e0e11; border: 1px solid #2a2a38;
+      border-radius: 8px; color: #c8c8e0; padding: 6px 10px;
+      font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; cursor: pointer;
+    }
 
-      .btn-tts {
-        padding: 8px 0;
-        border-radius: 9px;
-        border: 1px solid #2a2a38;
-        background: #0e0e11;
-        color: #a0a0c0;
-        font-size: 11.5px;
-        font-family: "DM Sans", sans-serif;
-        font-weight: 500;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        transition:
-          background 0.15s,
-          color 0.15s,
-          border-color 0.15s;
-      }
-      .btn-tts svg {
-        width: 13px;
-        height: 13px;
-        stroke: currentColor;
-        fill: none;
-        stroke-width: 2;
-      }
-      .btn-tts.read {
-        color: #a78bfa;
-        border-color: #3d3560;
-      }
-      .btn-tts.read:hover:not(:disabled) {
-        background: #1e1a35;
-      }
-      .btn-tts.pause:hover:not(:disabled) {
-        background: #1a2020;
-        color: #6ee7b7;
-        border-color: #2a3d38;
-      }
-      .btn-tts.stop:hover:not(:disabled) {
-        background: #201a1a;
-        color: #fca5a5;
-        border-color: #3d2828;
-      }
-      .btn-tts:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
-      }
+    .tts-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
 
-      /* Read simplified button */
-      .btn-read-simplified {
-        width: 100%;
-        padding: 8px;
-        margin-top: 8px;
-        background: #13131a;
-        border: 1px solid #302510;
-        border-radius: 8px;
-        color: #fbbf24;
-        font-size: 11px;
-        font-family: "DM Sans", sans-serif;
-        font-weight: 500;
-        cursor: pointer;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        transition: background 0.15s;
-      }
-      .btn-read-simplified:hover {
-        background: #1a1508;
-      }
-      .btn-read-simplified.visible {
-        display: flex;
-      }
+    .btn-tts {
+      padding: 8px 0; border-radius: 9px; border: 1px solid #2a2a38;
+      background: #0e0e11; color: #a0a0c0;
+      font-size: 11.5px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .btn-tts svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .btn-tts.read  { color: #a78bfa; border-color: #3d3560; }
+    .btn-tts.read:hover:not(:disabled)  { background: #1e1a35; }
+    .btn-tts.pause:hover:not(:disabled) { background: #1a2020; color: #6ee7b7; border-color: #2a3d38; }
+    .btn-tts.stop:hover:not(:disabled)  { background: #201a1a; color: #fca5a5; border-color: #3d2828; }
+    .btn-tts:disabled { opacity: 0.35; cursor: not-allowed; }
 
-      /* Status bar */
-      .status-bar {
-        background: #13131a;
-        border: 1px solid #1e1e2a;
-        border-radius: 11px;
-        padding: 10px 13px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .status-icon {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #4a4a60;
-        flex-shrink: 0;
-      }
-      .status-icon.active {
-        background: #6c63ff;
-        box-shadow: 0 0 6px #6c63ff88;
-      }
-      .status-icon.done {
-        background: #4ade80;
-      }
-      .status-icon.error {
-        background: #f87171;
-      }
-      #statusText {
-        font-size: 12px;
-        color: #6b6b80;
-        line-height: 1.4;
-      }
+    /* Read simplified button */
+    .btn-read-simplified {
+      width: 100%; padding: 8px; margin-top: 8px;
+      background: #13131a; border: 1px solid #302510;
+      border-radius: 8px; color: #fbbf24; font-size: 11px;
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      cursor: pointer; display: none; align-items: center; justify-content: center; gap: 5px;
+      transition: background 0.15s;
+    }
+    .btn-read-simplified:hover { background: #1a1508; }
+    .btn-read-simplified.visible { display: flex; }
 
-      /* Wave animation */
-      .wave {
-        display: inline-flex;
-        gap: 3px;
-        align-items: flex-end;
-        height: 12px;
-        vertical-align: middle;
-        margin-right: 4px;
-      }
-      .wave span {
-        display: inline-block;
-        width: 3px;
-        border-radius: 2px;
-        background: #6c63ff;
-        animation: wave 1s ease-in-out infinite;
-      }
-      .wave span:nth-child(2) {
-        animation-delay: 0.15s;
-      }
-      .wave span:nth-child(3) {
-        animation-delay: 0.3s;
-      }
-      .wave span:nth-child(4) {
-        animation-delay: 0.45s;
-      }
-      @keyframes wave {
-        0%,
-        100% {
-          height: 4px;
-          opacity: 0.4;
-        }
-        50% {
-          height: 12px;
-          opacity: 1;
-        }
-      }
+    /* Status bar */
+    .status-bar {
+      background: #13131a; border: 1px solid #1e1e2a;
+      border-radius: 11px; padding: 10px 13px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .status-icon { width: 8px; height: 8px; border-radius: 50%; background: #4a4a60; flex-shrink: 0; }
+    .status-icon.active { background: #6c63ff; box-shadow: 0 0 6px #6c63ff88; }
+    .status-icon.done   { background: #4ade80; }
+    .status-icon.error  { background: #f87171; }
+    #statusText { font-size: 12px; color: #6b6b80; line-height: 1.4; }
 
-      .sidebar-hint {
-        font-size: 10px;
-        color: #4a4a60;
-        text-align: center;
-        font-family: "Space Mono", monospace;
-        padding: 2px 0 4px;
-      }
-      .btn-go {
-        padding: 6px 12px;
-        background: #1a1830;
-        border: 1px solid #6c63ff55;
-        border-radius: 8px;
-        color: #a78bfa;
-        font-size: 12px;
-        font-family: "DM Sans", sans-serif;
-        font-weight: 500;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: background 0.15s;
-      }
-      .btn-go:hover {
-        background: #252040;
-        border-color: #6c63ff;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="header">
-      <div class="logo-dot">
-        <svg viewBox="0 0 24 24">
-          <line x1="12" y1="3" x2="12" y2="21" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="6.34" y1="6.34" x2="17.66" y2="17.66" />
-          <line x1="17.66" y1="6.34" x2="6.34" y2="17.66" />
+    /* Wave animation */
+    .wave { display: inline-flex; gap: 3px; align-items: flex-end; height: 12px; vertical-align: middle; margin-right: 4px; }
+    .wave span { display: inline-block; width: 3px; border-radius: 2px; background: #6c63ff; animation: wave 1s ease-in-out infinite; }
+    .wave span:nth-child(2) { animation-delay: 0.15s; }
+    .wave span:nth-child(3) { animation-delay: 0.3s; }
+    .wave span:nth-child(4) { animation-delay: 0.45s; }
+    @keyframes wave {
+      0%, 100% { height: 4px; opacity: 0.4; }
+      50%       { height: 12px; opacity: 1; }
+    }
+
+    .sidebar-hint {
+      font-size: 10px; color: #4a4a60; text-align: center;
+      font-family: 'Space Mono', monospace; padding: 2px 0 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo-dot">
+      <svg viewBox="0 0 24 24">
+        <line x1="12" y1="3" x2="12" y2="21"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="6.34" y1="6.34" x2="17.66" y2="17.66"/>
+        <line x1="17.66" y1="6.34" x2="6.34" y2="17.66"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>SpeakPage AI</h1>
+      <p>gemini nano · on-device</p>
+    </div>
+    <div class="status-dot"></div>
+  </div>
+
+  <div class="body">
+
+    <!-- AI Actions Grid -->
+    <div>
+      <div class="section-label">AI Actions</div>
+      <div class="ai-grid">
+        <button class="btn-ai summarize" id="summarizeBtn">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="label">Summarize</span>
+          <span class="sub">key points</span>
+        </button>
+
+        <button class="btn-ai simplify" id="simplifyBtn">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          <span class="label">Simplify</span>
+          <span class="sub">easy language</span>
+        </button>
+
+        <button class="btn-ai translate" id="translateBtn">
+          <svg viewBox="0 0 24 24"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
+          <span class="label">Translate</span>
+          <span class="sub" id="selectedLangLabel">Hindi</span>
+        </button>
+
+        <button class="btn-ai prompt-btn" id="promptToggleBtn">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="label">Ask AI</span>
+          <span class="sub">any question</span>
+        </button>
+      </div>
+      <p class="sidebar-hint">↗ Results open in sidebar panel</p>
+    </div>
+
+    <!-- Translate language selector (hidden until translate clicked) -->
+    <div id="langSection" style="display:none;">
+      <div class="lang-row">
+        <label>Translate to</label>
+        <select class="lang-select" id="langSelect">
+          <option value="hi">Hindi</option>
+          <option value="bn">Bengali</option>
+          <option value="te">Telugu</option>
+          <option value="ta">Tamil</option>
+          <option value="mr">Marathi</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="zh">Chinese</option>
+          <option value="ar">Arabic</option>
+          <option value="ja">Japanese</option>
+        </select>
+        <button class="btn-go" id="translateGoBtn">Go →</button>
+      </div>
+    </div>
+
+    <!-- Ask AI prompt input (hidden until Ask AI clicked) -->
+    <div class="prompt-section" id="promptSection" style="display:none;">
+      <div class="section-label">Ask about this page</div>
+      <textarea class="prompt-input" id="promptInput" rows="2"
+        placeholder="e.g. What are the key arguments in this article?"></textarea>
+      <button class="btn-ask" id="promptBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-      </div>
-      <div class="header-text">
-        <h1>SpeakPage AI</h1>
-        <p>gemini nano · on-device</p>
-      </div>
-      <div class="status-dot"></div>
+        Get Answer
+      </button>
     </div>
 
-    <div class="body">
-      <!-- AI Actions Grid -->
-      <div>
-        <div class="section-label">AI Actions</div>
-        <div class="ai-grid">
-          <button class="btn-ai summarize" id="summarizeBtn">
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-              />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-            </svg>
-            <span class="label">Summarize</span>
-            <span class="sub">key points</span>
-          </button>
-
-          <button class="btn-ai simplify" id="simplifyBtn">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v4l3 3" />
-            </svg>
-            <span class="label">Simplify</span>
-            <span class="sub">easy language</span>
-          </button>
-
-          <button class="btn-ai translate" id="translateBtn">
-            <svg viewBox="0 0 24 24">
-              <path d="M5 8l6 6" />
-              <path d="M4 14l6-6 2-3" />
-              <path d="M2 5h12" />
-              <path d="M7 2h1" />
-              <path d="M22 22l-5-10-5 10" />
-              <path d="M14 18h6" />
-            </svg>
-            <span class="label">Translate</span>
-            <span class="sub" id="selectedLangLabel">Hindi</span>
-          </button>
-
-          <button class="btn-ai prompt-btn" id="promptToggleBtn">
-            <svg viewBox="0 0 24 24">
-              <path
-                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-              />
-            </svg>
-            <span class="label">Ask AI</span>
-            <span class="sub">any question</span>
-          </button>
-        </div>
-        <p class="sidebar-hint">↗ Results open in sidebar panel</p>
+    <!-- TTS Section -->
+    <div class="tts-row">
+      <div class="section-label">Read Aloud</div>
+      <div class="speed-row">
+        <label for="speedSelect">Speed</label>
+        <select class="speed-select" id="speedSelect">
+          <option value="0.5">0.5x — slow</option>
+          <option value="0.75">0.75x — relaxed</option>
+          <option value="1.0" selected>1.0x — normal</option>
+          <option value="1.25">1.25x — brisk</option>
+          <option value="1.5">1.5x — fast</option>
+          <option value="2.0">2.0x — zoom</option>
+        </select>
       </div>
-
-      <!-- Translate language selector (hidden until translate clicked) -->
-      <!-- Translate language selector (hidden until translate clicked) -->
-      <div id="langSection" style="display: none">
-        <div class="lang-row">
-          <label>Translate to</label>
-          <select class="lang-select" id="langSelect">
-            <option value="hi">Hindi</option>
-            <option value="bn">Bengali</option>
-            <option value="te">Telugu</option>
-            <option value="ta">Tamil</option>
-            <option value="mr">Marathi</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="zh">Chinese</option>
-            <option value="ar">Arabic</option>
-            <option value="ja">Japanese</option>
-          </select>
-          <button class="btn-go" id="translateGoBtn">Go →</button>
-        </div>
-      </div>
-
-      <!-- Ask AI prompt input (hidden until Ask AI clicked) -->
-      <div class="prompt-section" id="promptSection" style="display: none">
-        <div class="section-label">Ask about this page</div>
-        <textarea
-          class="prompt-input"
-          id="promptInput"
-          rows="2"
-          placeholder="e.g. What are the key arguments in this article?"
-        ></textarea>
-        <button class="btn-ask" id="promptBtn">
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          Get Answer
+      <div class="tts-btns">
+        <button class="btn-tts read" id="readBtn">
+          <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/></svg>
+          Read
+        </button>
+        <button class="btn-tts pause" id="pauseResumeBtn" disabled>
+          <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          Pause
+        </button>
+        <button class="btn-tts stop" id="stopBtn" disabled>
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="currentColor" stroke="none"/></svg>
+          Stop
         </button>
       </div>
-
-      <!-- TTS Section -->
-      <div class="tts-row">
-        <div class="section-label">Read Aloud</div>
-        <div class="speed-row">
-          <label for="speedSelect">Speed</label>
-          <select class="speed-select" id="speedSelect">
-            <option value="0.5">0.5x — slow</option>
-            <option value="0.75">0.75x — relaxed</option>
-            <option value="1.0" selected>1.0x — normal</option>
-            <option value="1.25">1.25x — brisk</option>
-            <option value="1.5">1.5x — fast</option>
-            <option value="2.0">2.0x — zoom</option>
-          </select>
-        </div>
-        <div class="tts-btns">
-          <button class="btn-tts read" id="readBtn">
-            <svg viewBox="0 0 24 24">
-              <polygon
-                points="5 3 19 12 5 21 5 3"
-                fill="currentColor"
-                stroke="none"
-              />
-            </svg>
-            Read
-          </button>
-          <button class="btn-tts pause" id="pauseResumeBtn" disabled>
-            <svg viewBox="0 0 24 24">
-              <rect x="6" y="4" width="4" height="16" />
-              <rect x="14" y="4" width="4" height="16" />
-            </svg>
-            Pause
-          </button>
-          <button class="btn-tts stop" id="stopBtn" disabled>
-            <svg viewBox="0 0 24 24">
-              <rect
-                x="3"
-                y="3"
-                width="18"
-                height="18"
-                rx="2"
-                fill="currentColor"
-                stroke="none"
-              />
-            </svg>
-            Stop
-          </button>
-        </div>
-        <!-- Read simplified version button (appears after simplify) -->
-        <button class="btn-read-simplified" id="readSimplifiedBtn">
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <polygon
-              points="5 3 19 12 5 21 5 3"
-              fill="currentColor"
-              stroke="none"
-            />
-          </svg>
-          Read simplified version
-        </button>
-      </div>
-
-      <!-- Status Bar -->
-      <div class="status-bar">
-        <div class="status-icon" id="statusIcon"></div>
-        <div id="statusText">Ready — open on any article page.</div>
-      </div>
+      <button class="btn-read-simplified" id="readSimplifiedBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/></svg>
+        Read simplified version
+      </button>
     </div>
 
-    <script src="popup.js"></script>
-  </body>
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-icon" id="statusIcon"></div>
+      <div id="statusText">Ready — open on any article page.</div>
+    </div>
+
+  </div>
+
+  <script src="popup.js"></script>
+</body>
 </html>
